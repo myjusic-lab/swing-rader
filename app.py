@@ -24,7 +24,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 def load_portfolio():
     """구글 시트에서 포트폴리오 불러오기"""
     try:
-        df = conn.read(ttl="5s")
+        df = conn.read(worksheet="Sheet1", ttl=0)
         if df is not None and not df.empty:
             df = df.dropna(how="all")
             required_cols = ["티커", "매수가", "수량"]
@@ -33,14 +33,15 @@ def load_portfolio():
                 df["매수가"] = pd.to_numeric(df["매수가"], errors="coerce").fillna(0.0)
                 df["수량"] = pd.to_numeric(df["수량"], errors="coerce").fillna(0.0)
                 return df[df["티커"] != ""][required_cols]
-    except Exception:
-        pass
+    except Exception as e:
+        st.error(f"구글 시트 읽기 에러: {e}")
     return pd.DataFrame(columns=["티커", "매수가", "수량"])
+
 
 def save_portfolio(df):
     """구글 시트에 포트폴리오 업데이트"""
     try:
-        conn.update(data=df)
+        conn.update(worksheet="Sheet1", data=df)
         return True
     except Exception as e:
         st.error(f"구글 시트 저장 실패: {e}")
@@ -313,9 +314,15 @@ with tab_my:
         st.info("현재 구글 시트에 등록된 보유 종목이 없습니다. 위의 '보유 종목 추가' 메뉴를 통해 입력해보세요.")
 
 # ==================== 탭 1, 2, 3: 시장 모니터링 ====================
-with st.spinner("최근 14일 월가 리포트 분석 중..."):
+@st.cache_data(ttl=1800)
+def get_all_watchlist_results():
     results = [analyze_stock_full(t) for t in WATCHLIST_POOL]
-    valid_results = [r for r in results if r is not None]
+    return [r for r in results if r is not None]
+
+with tab1:
+    ...
+    with st.spinner("7일 이내 긴급 상향 종목 분석 중..."):
+        valid_results = get_all_watchlist_results()
 
 with tab1:
     st.subheader("🔥 7일 이내 신규 평가 발표 종목")
