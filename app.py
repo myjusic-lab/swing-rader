@@ -364,9 +364,11 @@ with tab1:
                 c2.write(f"• **전체 14D (B/H/S):** `{s['전체 14D (B/H/S)']}`")
                 c2.write(f"• **14D 목표가 평균:** {s['14D 목표가 평균']} (범위: {s['14D 최고/최저']})")
                 c2.write(f"• **탑티어 매수사:** {s['탑티어 매수사']}")
-                details = [f"🔥 {e}" for e in s["최근7일내역"]]
-                if s["8~14일내역"]: details.extend([f"⏱️ {e}" for e in s["8~14일내역"]])
-                c3.info("**14일 내 리포트 이력:**\n" + "\n".join(details))
+                details = [f"- 🔥 {e}" for e in s["최근7일내역"]]
+                if s["8~14일내역"]: 
+                    details.extend([f"- ⏱️ {e}" for e in s["8~14일내역"]])
+                
+                c3.info("**14일 내 리포트 이력:**\n\n" + "\n".join(details))
                 st.markdown("---")
     else:
         st.info("현재 모니터링 풀 내에 최근 7일간 신규 평가가 발표된 종목이 없습니다.")
