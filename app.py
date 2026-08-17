@@ -8,9 +8,19 @@ from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="Wall Street 14D Swing Radar", layout="wide", initial_sidebar_state="collapsed")
 
-# 1. 글로벌 증권사 신뢰도 티어 정의
-TIER_1_FIRMS = ["GOLDMAN SACHS", "MORGAN STANLEY", "JP MORGAN", "JPMORGAN", "BANK OF AMERICA", "BOFA", "CITIGROUP", "BARCLAYS", "UBS", "DEUTSCHE BANK"]
-TIER_2_FIRMS = ["WEDBUSH", "NEEDHAM", "PIPER SANDLER", "JEFFERIES", "EVERCORE ISI", "BAIRD", "OPPENHEIMER", "MIZUHO", "STIFEL", "COWEN", "BERNSTEIN", "CANTOR FITZGERALD", "RAYMOND JAMES", "WELLS FARGO", "RBC CAPITAL", "KEYBANC"]
+# 1. 글로벌 증권사 신뢰도 티어 정의 (변형 사명 완벽 대응)
+TIER_1_FIRMS = [
+    "GOLDMAN SACHS", "GOLDMAN", "MORGAN STANLEY", "JP MORGAN", "JPMORGAN", 
+    "BANK OF AMERICA", "BOFA", "B OF A", "CITIGROUP", "CITI", "BARCLAYS", 
+    "UBS", "DEUTSCHE BANK", "DEUTSCHE"
+]
+
+TIER_2_FIRMS = [
+    "WEDBUSH", "NEEDHAM", "PIPER SANDLER", "PIPER", "JEFFERIES", "EVERCORE", 
+    "BAIRD", "OPPENHEIMER", "MIZUHO", "STIFEL", "COWEN", "BERNSTEIN", 
+    "CANTOR FITZGERALD", "CANTOR", "RAYMOND JAMES", "WELLS FARGO", 
+    "RBC CAPITAL", "RBC", "KEYBANC", "TRUIST", "BERENBERG", "MACQUARIE"
+]
 
 WATCHLIST_POOL = [
     "PLTR", "CRWD", "ARM", "IONQ", "SMCI", "RKLB", "NET", "SNOW",
@@ -338,13 +348,11 @@ def get_all_watchlist_results():
     return [r for r in results if r is not None]
 
 with tab1:
-    ...
+    st.subheader("🔥 7일 이내 신규 평가 발표 종목")
     with st.spinner("7일 이내 긴급 상향 종목 분석 중..."):
         valid_results = get_all_watchlist_results()
-
-with tab1:
-    st.subheader("🔥 7일 이내 신규 평가 발표 종목")
-    urgent_stocks = [r for r in valid_results if r["has_7d"]]
+        urgent_stocks = [r for r in valid_results if r["has_7d"]]
+        
     if urgent_stocks:
         urgent_stocks = sorted(urgent_stocks, key=lambda x: x["raw_score"], reverse=True)
         for s in urgent_stocks:
@@ -365,6 +373,9 @@ with tab1:
 
 with tab2:
     st.subheader("🏆 최근 14일 기관 평가 종합 순위")
+    with st.spinner("14일 모멘텀 랭킹 산출 중..."):
+        valid_results = get_all_watchlist_results()
+        
     if valid_results:
         df = pd.DataFrame(valid_results)
         df_sorted = df.sort_values(by="raw_score", ascending=False).drop(
