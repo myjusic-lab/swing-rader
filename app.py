@@ -93,10 +93,18 @@ def analyze_stock_full(ticker):
                 to_grade = str(row.get('ToGrade', ''))
                 action = str(row.get('Action', '')).lower()
                 
-                for col in ['TargetPrice', 'Target_Price', 'PriceTarget', 'currentPriceTarget']:
-                    if col in row and pd.notnull(row[col]) and float(row[col]) > 0:
-                        target_prices_14d.append(float(row[col]))
-                        break
+                # 1. 해당 리포트의 개별 목표가 추출
+                row_tp = None
+                for col in ['TargetPrice', 'Target_Price', 'PriceTarget', 'currentPriceTarget', 'toPriceTarget']:
+                    if col in row and pd.notnull(row[col]):
+                        try:
+                            val = float(row[col])
+                            if val > 0:
+                                row_tp = val
+                                target_prices_14d.append(val)
+                                break
+                        except (ValueError, TypeError):
+                            pass
                 
                 if not firm or firm in seen_firms:
                     continue
@@ -110,7 +118,17 @@ def analyze_stock_full(ticker):
                 category = classify_grade(to_grade)
                 is_within_7d = (date >= seven_days_ago)
                 
-                event_text = f"[{date.strftime('%m/%d')}] {firm}: {to_grade} ({action.upper()})"
+                # 2. 티어 배지 및 목표가 텍스트 포맷 구성
+                if is_tier1:
+                    tier_badge = "👑[1티어]"
+                elif is_tier2:
+                    tier_badge = "⭐[2티어]"
+                else:
+                    tier_badge = "[일반]"
+                    
+                tp_text = f" (${row_tp:g})" if row_tp is not None else ""
+                
+                event_text = f"[{date.strftime('%m/%d')}] {tier_badge} {firm}: {to_grade} ({action.upper()}){tp_text}"
                 
                 if is_within_7d:
                     recent_7d_events.append(event_text)
